@@ -398,6 +398,8 @@ var lizMap = function() {
       slider.show();
 
     updateSwitcherSize();
+
+    updateMiniDockSize();
   }
 
   /**
@@ -462,6 +464,30 @@ var lizMap = function() {
     // If map if fullscreen, get #menu position : bottom or top
     h -= 2 * (parseInt($('#menu').css('bottom')) ? parseInt($('#menu').css('bottom')) : 0 ) ;
 
+  }
+
+  /**
+   * PRIVATE function: updateMiniDockSize
+   * update the minidock size
+   */
+  function updateMiniDockSize() {
+      if ( $('#mini-dock .tab-pane:visible').length == 0 )
+        return 0;
+      // the mini-dock menu-content visible
+      var mdmcv = $('#mini-dock .tab-pane:visible h3 ~ .menu-content:first');
+      mdmcv.css( 'max-height', '100%' )
+      console.log('updateMiniDockSize');
+      var h = $('#mini-dock').height();
+      console.log('updateMiniDockSize: '+h);
+      h -= $('#mini-dock .tab-pane:visible h3').height();
+      console.log('updateMiniDockSize: '+h);
+      h -= (parseInt(mdmcv.css('margin-top')) ? parseInt(mdmcv.css('margin-top')) : 0 ) ;
+      h -= (parseInt(mdmcv.css('margin-bottom')) ? parseInt(mdmcv.css('margin-bottom')) : 0 ) ;
+      h -= (parseInt(mdmcv.css('padding-top')) ? parseInt(mdmcv.css('padding-top')) : 0 ) ;
+      h -= (parseInt(mdmcv.css('padding-bottom')) ? parseInt(mdmcv.css('padding-bottom')) : 0 ) ;
+      console.log('updateMiniDockSize: '+h);
+
+      mdmcv.css( 'max-height', h ).css('overflow-x', 'hidden').css('overflow-y', 'auto');
   }
 
   /**
@@ -885,6 +911,24 @@ var lizMap = function() {
       };
       if (layerWmsParams.format != 'image/jpeg')
           layerWmsParams['transparent'] = true;
+
+      //Manage attribution
+      if (typeof layer.attribution == "object") {
+          console.log(layer.attribution);
+          // Update href if needed
+          if ( 'href' in layer.attribution &&
+               layer.attribution.href != '' &&
+               layer.attribution.href.indexOf('://') == -1) {
+            layer.attribution.href = 'http://'+layer.attribution.href;
+          }
+          // Update attribution
+          if ( !('title' in layer.attribution) || layer.attribution.title == '' ) {
+              layer.attribution.title = layer.attribution.href.split('://')[1];
+          } else
+          if ( !('href' in layer.attribution) || layer.attribution.href == '' ) {
+              layer.attribution = layer.attribution.title;
+          }
+      }
 
       var wmtsLayer = null;
       if ( layerConfig.cached == 'True' && wmtsCapabilities ) {
@@ -2682,6 +2726,7 @@ var lizMap = function() {
           isBaseLayer:true
          ,gutter:5
          ,buffer:0
+         ,singleTile:true
         });
 
     if (config.options.hasOverview) {
@@ -5554,7 +5599,7 @@ OpenLayers.Control.HighlightFeature = OpenLayers.Class(OpenLayers.Control, {
                   aCallBack( aName, aFilter, data.features, aConfig['alias'] );
 
               $('body').css('cursor', 'auto');
-          } else
+          } else {
               var service = OpenLayers.Util.urlAppend(lizUrls.wms
                     ,OpenLayers.Util.getParameterString(lizUrls.params)
               );
@@ -5576,8 +5621,7 @@ OpenLayers.Control.HighlightFeature = OpenLayers.Class(OpenLayers.Control, {
                   $('body').css('cursor', 'auto');
 
               },'json');
-
-
+           }
 
       },'json');
 
@@ -5928,6 +5972,13 @@ OpenLayers.Control.HighlightFeature = OpenLayers.Class(OpenLayers.Control, {
      */
     updateSwitcherSize: function() {
       return updateSwitcherSize();
+    },
+
+    /**
+     * Method: updateMiniDockSize
+     */
+    updateMiniDockSize: function() {
+      return updateMiniDockSize();
     },
 
     /**
@@ -6350,6 +6401,7 @@ OpenLayers.Control.HighlightFeature = OpenLayers.Class(OpenLayers.Control, {
                 tab.children('a').first().click();
                 parent.addClass('active');
                 lizMap.events.triggerEvent( "minidockopened", {'id':id} );
+                updateMiniDockSize();
             }
             self.blur();
 
